@@ -14,14 +14,15 @@ const UpdateRoom = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("api/room/all", {
+        const response = await axios.get(`api/room/user/${userId}`, {
           headers: {
-            Authorization: `Bearer ${token}` // Include JWT token in the request headers
+            Authorization: `Bearer ${token}`
           }
         });
 
-        if (Array.isArray(response.data)) {
-          setUserRooms(response.data);
+        const rooms = response.data.data;
+        if (Array.isArray(rooms)) {
+          setUserRooms(rooms);
         } else {
           console.error("Unexpected response format:", response.data);
           setUserRooms([]);
@@ -68,8 +69,7 @@ const UpdateRoom = () => {
 
         <div className='room-list'>
           {userRooms.map((room) => (
-            // Use conditional rendering to check if the room belongs to the current landlord and if all required fields are present
-            (room.landlord === userId && room.type && room.address && room.status) && (
+            (room.type && room.address && room.status) && (
               <div className='room-card' key={room._id}>
                 <div className='forImage'>
                   <img src={SharingRoomPhoto} alt="Profile" className="Room-photo" />

@@ -1,0 +1,135 @@
+.hero {
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  padding: 64px 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero__content {
+  max-width: 560px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero__title {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+}
+
+.hero__subtitle {
+  font-size: 18px;
+  opacity: 0.9;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.hero__cta {
+  font-size: 16px;
+  padding: 14px 28px;
+  background: #fff;
+  color: var(--primary);
+  border-radius: 10px;
+}
+
+.hero__cta:hover { background: #f0f0ff; transform: translateY(-2px); }
+
+.hero__blob {
+  position: absolute;
+  right: -80px;
+  top: -80px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.room-types { padding-top: 64px; padding-bottom: 48px; }
+
+.room-type-card {
+  display: block;
+  padding: 28px 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  color: var(--text);
+}
+
+.room-type-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.room-type-card__icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.room-type-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.room-type-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.how-it-works { padding-bottom: 64px; }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.step-card {
+  padding: 28px 24px;
+  position: relative;
+}
+
+.step-card__num {
+  display: block;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--primary);
+  opacity: 0.2;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.step-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.step-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.site-footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .hero { padding: 48px 24px; }
+}

@@ -1,85 +1,107 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from './llnavbar';
 import '../css/RoomSearch.css';
 import axios from 'axios';
 
 const RoomRequests = () => {
-  const [requests, setRequests] = useState([]);
-  const userId = localStorage.getItem('userId'); // Get the current landlord's ID from localStorage
+  const [bookings, setBookings] = useState([]);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10 });
 
-  useEffect(() => {
-    const fetchRoomRequests = async () => {
-      try {
-        const response = await axios.get(`api/request/all/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        
-        if (Array.isArray(response.data)) {
-          setRequests(response.data);
-        } else {
-          console.error("Unexpected response format:", response.data);
-          setRequests([]);
-        }
-        
-      } catch (error) {
-        console.error('Error fetching room requests:', error);
-      }
-    };
+  const authHeader = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
-    fetchRoomRequests();
-  }, [userId]); // Include userId in the dependency array to re-fetch requests when it changes
-
-  const updateStatusOfRoom = async (requestId, status) => {
+  const fetchBookings = async (page = 1) => {
     try {
-      const response = await axios.put(`api/request/${requestId}`, { status }, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await axios.get(`/api/bookings?page=${page}&limit=${pagination.limit}`, {
+        headers: authHeader,
       });
-
-      console.log('Room status updated successfully');
+      const { bookings: data, total, page: currentPage, limit } = response.data.data;
+      setBookings(data);
+      setPagination({ total, page: currentPage, limit });
     } catch (error) {
-      console.error('Error updating room status:', error);
+      console.error('Error fetching bookings:', error);
     }
   };
 
   useEffect(() => {
-    console.log('Requests state updated:', requests);
-  }, [requests]);
+    fetchBookings(1);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const updateStatus = async (bookingId, status) => {
+    try {
+      await axios.put(`/api/bookings/${bookingId}`, { status }, { headers: authHeader });
+      setBookings((prev) =>
+        prev.map((b) => (b._id === bookingId ? { ...b, status } : b))
+      );
+    } catch (error) {
+      console.error('Error updating booking:', error);
+    }
+  };
+
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
 
   return (
     <div>
       <Navbar />
-      <div className='requestPage'>
-        <div className='room-list_requestPage'>
-          {requests.map((request) => (
-            (request.landlord === userId) && (
-            <div className='room-card_requestPage' key={request._id} style={{width:"600px"}}>
-              <div className='roomDetails'>
-                <p className='lable'>Tenant Id:</p>
-                <p className='inputFields'>{request.tenant}</p>
+      <div className="requestPage">
+        <div className="room-list_requestPage">
+          {bookings.map((booking) => (
+            <div className="room-card_requestPage" key={booking._id} style={{ width: '600px' }}>
+              <div className="roomDetails">
+                <p className="lable">Tenant:</p>
+                <p className="inputFields">
+                  {booking.tenantId?.name} ({booking.tenantId?.email})
+                </p>
 
-                <p className='lable'>Landlord Id: </p>
-                <p className='inputFields'>{request.landlord}</p>
+                <p className="lable">Property:</p>
+                <p className="inputFields">
+                  {booking.propertyId?.type} — {booking.propertyId?.address}, {booking.propertyId?.city}
+                </p>
 
-                <p className='lable'>Room Id: </p>
-                <p className='inputFields'>{request.room}</p>
+                <p className="lable">Booking Status:</p>
+                <p className="inputFields">{booking.status}</p>
 
-                <p className='lable'>Status: </p>
-                <p className='inputFields'>{request.status}</p>
+                <p className="lable">Payment Status:</p>
+                <p className="inputFields">{booking.paymentStatus}</p>
               </div>
-              <div className='updateButtons_box'>
-                <button className='updateAndDelete_btn' onClick={() => updateStatusOfRoom(request._id, 'accepted')}>Accept</button>
-                <button className='updateAndDelete_btn' onClick={() => updateStatusOfRoom(request._id, 'rejected')}>Reject</button>
-              </div>
+              {booking.status === 'pending' && (
+                <div className="updateButtons_box">
+                  <button
+                    className="updateAndDelete_btn"
+                    onClick={() => updateStatus(booking._id, 'approved')}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="updateAndDelete_btn"
+                    onClick={() => updateStatus(booking._id, 'rejected')}
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
-            )
           ))}
         </div>
+
+        {totalPages > 1 && (
+          <div style={{ textAlign: 'center', margin: '20px 0' }}>
+            <button
+              onClick={() => fetchBookings(pagination.page - 1)}
+              disabled={pagination.page <= 1}
+            >
+              Prev
+            </button>
+            <span style={{ margin: '0 12px' }}>
+              Page {pagination.page} of {totalPages}
+            </span>
+            <button
+              onClick={() => fetchBookings(pagination.page + 1)}
+              disabled={pagination.page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

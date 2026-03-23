@@ -25,14 +25,14 @@ const ProfilePage = () => {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
-          `api/tenant/profile/${userId}`,
+          `api/user/profile/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
           }
         );
-        setUserData(response.data);
+        setUserData(response.data.data);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -72,7 +72,7 @@ const ProfilePage = () => {
       formData.append("profilePhoto", profilePhoto);
 
       const response = await axios.post(
-        `api/upload/tenant/profile/photo/${userId}`,
+        `api/user/profile/photo/${userId}`,
         formData,
         {
           headers: {
@@ -82,11 +82,9 @@ const ProfilePage = () => {
         }
       );
       alert("Profile photo uploaded successfully");
-      console.log("Profile photo uploaded successfully:", response.data);
-
       setUserData((prevUserData) => ({
         ...prevUserData,
-        profilePhoto: response.data.filePath, // Assuming the response contains the file path
+        profilePhoto: response.data.data?.filePath,
       }));
     } catch (error) {
       console.error("Error uploading profile photo:", error);
@@ -105,7 +103,7 @@ const ProfilePage = () => {
     event.preventDefault();
     try {
       const response = await axios.put(
-        `api/tenant/profile/${userId}`,
+        `api/user/profile/${userId}`,
         updatedData,
         {
           headers: {
@@ -115,9 +113,8 @@ const ProfilePage = () => {
         }
       );
       alert("User details updated successfully");
-      console.log("User details updated successfully:", response.data);
       setIsModalOpen(false);
-      setUserData(response.data); // Update the user data with the response data
+      setUserData(response.data.data);
     } catch (error) {
       console.error("Error updating user details:", error);
     }
@@ -203,7 +200,7 @@ const ProfilePage = () => {
   const deleteAccount = async () => {
     try {
       const response = await axios.delete(
-        `api/tenant/profile/${userEmail}`,
+        `api/user/profile/${userEmail}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -211,7 +208,7 @@ const ProfilePage = () => {
         }
       );
 
-      if (!response.status) {
+      if (!response.data.success) {
         throw new Error("Failed to delete user");
       }
 

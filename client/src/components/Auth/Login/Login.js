@@ -22,21 +22,18 @@ export default function Login() {
     const json = await response.json();
     console.log(json);
     if (json.success) {
-      //save the auth toke to local storage and redirect
-      localStorage.setItem('userEmail', credentials.email)
-      localStorage.setItem('token', json.authToken)
-      const userId = json.userId;
-      localStorage.setItem('userId', userId);
-      
-      if(credentials.role === 'landlord'){
-        navigate("/landlordProfile")
-      }else{
-        navigate("/home")
-      }
+      localStorage.setItem('userEmail', credentials.email);
+      localStorage.setItem('token', json.data.authToken);
+      localStorage.setItem('userId', json.data.userId);
+      localStorage.setItem('role', json.data.role);
 
-    }
-    else {
-      alert("Enter Valid Credentials")
+      if (json.data.role === 'landlord') {
+        navigate("/landlordProfile");
+      } else {
+        navigate("/home");
+      }
+    } else {
+      alert(json.message || "Enter Valid Credentials");
     }
   }
 

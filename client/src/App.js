@@ -1,44 +1,54 @@
-import '../node_modules/bootstrap-dark-5/dist/css/bootstrap-dark.min.css'  //npm i bootstrap-dark-5 boostrap
-import '../node_modules/bootstrap/dist/js/bootstrap.bundle';
-import "../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js";
-
-
 import React from 'react';
-import '../src/App.css';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-// import LoginLandlord from './components/Auth/Login/landlord';
-import Homepage from './components/Pages/homePage';
-// import LoginUser from './components/Auth/Login/tenant';
-import LoginPage from './components/Auth/Login/Login';
-import RegisterUser from './components/Auth/Register/Register'; 
-// import RegisterLandlord from './components/Auth/Register/landlordRegister';
-import RoomSearch from './components/Pages/RoomSearch'
-import UserProfile from './components/Auth/Profile/tenantProfile';
-import LandlordDashboard from './components/Auth/Profile/landlordProfile';
-import UpdateRoom from './components/Pages/updateRoom';
-import RoomRequests from './components/Pages/roomRequests.jsx';
-import AddRoom from './components/Pages/addRoom.jsx';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './shared/AuthContext';
+import ProtectedRoute from './shared/ProtectedRoute';
+import './shared/global.css';
 
+// Auth
+import Login from './modules/auth/Login';
+import Register from './modules/auth/Register';
+
+// Home
+import HomePage from './modules/home/HomePage';
+
+// Property
+import PropertyListing from './modules/property/PropertyListing';
+import LandlordDashboard from './modules/property/LandlordDashboard';
+
+// Booking
+import BookingDashboard from './modules/booking/BookingDashboard';
+
+// Chat
+import ChatUI from './modules/chat/ChatUI';
+
+// Profile
+import TenantProfile from './modules/profile/TenantProfile';
+import LandlordProfile from './modules/profile/LandlordProfile';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/home" element={<Homepage />} />
-        <Route path="/signup" element={<RegisterUser />} /> 
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Register />} />
 
-        {/* Protected Routes */}
-        <Route path="/tenantProfile" element={<UserProfile />} />
-        <Route path="/landlordProfile" element={<LandlordDashboard />} />
-        <Route path="/search" element={<RoomSearch />} />
-        <Route path="/updateRoom" element={<UpdateRoom />} />
-        <Route path="/roomRequests" element={<RoomRequests />} />
-        <Route path="/addRoom" element={<AddRoom />} />
-        {/* 654fd173ab76d6a714ad8527 */}
-        
-      </Routes>
-    </Router>
+          {/* Tenant routes */}
+          <Route path="/home" element={<ProtectedRoute role="tenant"><HomePage /></ProtectedRoute>} />
+          <Route path="/search" element={<ProtectedRoute role="tenant"><PropertyListing /></ProtectedRoute>} />
+          <Route path="/tenant/profile" element={<ProtectedRoute role="tenant"><TenantProfile /></ProtectedRoute>} />
+
+          {/* Landlord routes */}
+          <Route path="/landlord/dashboard" element={<ProtectedRoute role="landlord"><LandlordDashboard /></ProtectedRoute>} />
+          <Route path="/landlord/bookings" element={<ProtectedRoute role="landlord"><BookingDashboard /></ProtectedRoute>} />
+          <Route path="/landlord/profile" element={<ProtectedRoute role="landlord"><LandlordProfile /></ProtectedRoute>} />
+
+          {/* Shared */}
+          <Route path="/chat" element={<ProtectedRoute><ChatUI /></ProtectedRoute>} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
