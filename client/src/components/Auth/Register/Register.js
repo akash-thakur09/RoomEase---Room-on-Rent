@@ -28,21 +28,18 @@ export default function Signup() {
     const json = await response.json();
   
     if (json.success) {
-      // Save user details to local storage
       localStorage.setItem('userEmail', credentials.email);
-      localStorage.setItem('token', json.authToken);
-      
-      // Assuming the server sends back the user ID in the response
-      const userId = json.userId;
-      localStorage.setItem('userId', userId);
+      localStorage.setItem('token', json.data.authToken);
+      localStorage.setItem('userId', json.data.userId);
+      localStorage.setItem('role', json.data.role);
   
-      if (credentials.role === 'landlord') {
+      if (json.data.role === 'landlord') {
         navigate("/landlordProfile");
       } else {
         navigate("/home");
       }
     } else {
-      alert("Enter Valid Credentials");
+      alert(json.message || "Enter Valid Credentials");
     }
   };
 

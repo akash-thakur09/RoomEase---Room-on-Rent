@@ -26,16 +26,17 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`api/landlord/profile/${userId}`, {
+        const response = await axios.get(`api/user/profile/${userId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        setUserData(response.data);
+        const profile = response.data.data;
+        setUserData(profile);
         setUpdatedData({
-          name: response.data.name,
-          email: response.data.email,
-          contactNumber: response.data.contactNumber,
+          name: profile.name,
+          email: profile.email,
+          contactNumber: profile.contactNumber,
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -59,18 +60,16 @@ const ProfilePage = () => {
       const formData = new FormData();
       formData.append('profilePhoto', profilePhoto);
   
-      const response = await axios.post(`api/upload/landlord/profile/photo/${userId}`, formData, {
+      const response = await axios.post(`api/user/profile/photo/${userId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
       alert('Profile photo uploaded successfully');
-      console.log('Profile photo uploaded successfully:', response.data);
-  
       setUserData(prevUserData => ({
         ...prevUserData,
-        profilePhoto: response.data.filePath // Assuming the response contains the file path
+        profilePhoto: response.data.data?.filePath,
       }));
     } catch (error) {
       console.error('Error uploading profile photo:', error);
@@ -89,7 +88,7 @@ const ProfilePage = () => {
     event.preventDefault();
     try {
       const response = await axios.put(
-        `api/landlord/profile/${userId}`,
+        `api/user/profile/${userId}`,
         updatedData,
         {
           headers: {
@@ -99,9 +98,8 @@ const ProfilePage = () => {
         }
       );
       alert("User details updated successfully");
-      console.log("User details updated successfully:", response.data);
       setIsModalOpen(false);
-      setUserData(response.data); // Update the user data with the response data
+      setUserData(response.data.data);
     } catch (error) {
       console.error("Error updating user details:", error);
     }
@@ -147,14 +145,13 @@ const ProfilePage = () => {
 
   const deleteAccount = async () => {
     try {
-      const response = await axios.delete(`api/landlord/profile/${userEmail}`, {
+      const response = await axios.delete(`api/user/profile/${userEmail}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
-      if (!response.status) {
-        console.log('res galat h');
+      if (!response.data.success) {
         throw new Error('Failed to delete user');
       }
 

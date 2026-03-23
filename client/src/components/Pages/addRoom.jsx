@@ -27,14 +27,14 @@ const AddRoom = () => {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
-          `api/landlord/profile/${userId}`,
+          `api/user/profile/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
           }
         );
-        setUserData(response.data);
+        setUserData(response.data.data);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
