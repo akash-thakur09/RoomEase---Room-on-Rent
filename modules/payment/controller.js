@@ -1,10 +1,6 @@
 const service = require('./service');
 const { sendSuccess, sendError } = require('../../utils/apiResponse');
 
-/**
- * POST /api/payments/create-order
- * Body: { bookingId, amount }  — amount in paise
- */
 const createOrder = async (req, res) => {
   try {
     const { bookingId, amount } = req.body;
@@ -18,16 +14,10 @@ const createOrder = async (req, res) => {
   }
 };
 
-/**
- * POST /api/payments/webhook
- * Razorpay sends raw body + x-razorpay-signature header
- */
 const webhook = async (req, res) => {
   try {
     const signature = req.headers['x-razorpay-signature'];
     if (!signature) return sendError(res, 'Missing signature', 400);
-
-    // req.rawBody is set by the raw body middleware in routes.js
     const result = await service.handleWebhook(req.rawBody, signature);
     return sendSuccess(res, 'Webhook processed', result);
   } catch (err) {
@@ -35,4 +25,29 @@ const webhook = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, webhook };
+/** GET /api/payments — payment history for the current user */
+const getPaymentHistory = async (req, res) => {
+  try {
+    const { page, limit } = req.query;
+    const data = await service.getPaymentHistory({
+      userId: req.user.id,
+      page,
+      limit,
+    });
+    return sendSuccess(res, 'Payment history fetched', data);
+  } catch (err) {
+    return sendError(res, err.message, err.status || 500);
+  }
+};
+
+/** GET /api/payments/:id — single payment detail */
+const getPaymentById = async (req, res) => {
+  try {
+    const data = await service.getPaymentById(req.params.id);
+    return sendSuccess(res, 'Payment fetched', data);
+  } catch (err) {
+    return sendError(res, err.message, err.status || 500);
+  }
+};
+
+module.exports = { createOrder, webhook, getPaymentHistory, getPaymentById };

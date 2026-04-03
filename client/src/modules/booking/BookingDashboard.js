@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../shared/Navbar';
-import { RowSkeleton } from '../../shared/Skeleton';
+import Navbar from '../../shared/components/Navbar/Navbar';
+import { RowSkeleton } from '../../shared/components/Skeleton';
 import { getBookings, updateBookingStatus } from '../../services/bookingService';
 import './booking.css';
 

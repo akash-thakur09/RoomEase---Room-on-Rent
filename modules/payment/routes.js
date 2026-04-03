@@ -3,18 +3,20 @@ const router = express.Router();
 const controller = require('./controller');
 const authMiddleware = require('../../middleware/authMiddleware');
 
-/**
- * Capture raw body for webhook signature verification.
- * Must be applied BEFORE express.json() parses the body.
- */
 const rawBodyCapture = express.raw({ type: 'application/json' });
 
-// POST /api/payments/create-order  — authenticated tenants only
+// GET  /api/payments          — payment history for current user
+router.get('/',              authMiddleware, controller.getPaymentHistory);
+
+// GET  /api/payments/:id      — single payment detail
+router.get('/:id',           authMiddleware, controller.getPaymentById);
+
+// POST /api/payments/create-order
 router.post('/create-order', authMiddleware, controller.createOrder);
 
-// POST /api/payments/webhook  — public, raw body required for HMAC verification
+// POST /api/payments/webhook
 router.post('/webhook', rawBodyCapture, (req, res, next) => {
-  req.rawBody = req.body; // Buffer from express.raw
+  req.rawBody = req.body;
   next();
 }, controller.webhook);
 

@@ -9,6 +9,9 @@ const roomSchema = new mongoose.Schema(
     city:     { type: String, required: true },
     landlord: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     status:   { type: String, enum: ['available', 'occupied'], default: 'available' },
+    rent:     { type: Number, default: null },
+    amenities: [{ type: String }],
+    description: { type: String, default: '' },
   },
   { timestamps: true }
 );

@@ -1,11 +1,10 @@
-const mongoose = require('mongoose');
-
-const requestSchema = new mongoose.Schema({
-  tenant: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
-  landlord: { type: mongoose.Schema.Types.ObjectId, ref: 'Landlord', required: true },
-  room: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
-  status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' }
-  
-});
-
-module.exports = mongoose.model('Request', requestSchema);
+/**
+ * requestModel.js — REMOVED
+ * Replaced by bookingModel.js / modules/booking/model.js.
+ * The new Booking model has richer status tracking and payment linkage.
+ *
+ * This stub re-exports the Booking model so any legacy code that still imports
+ * requestModel.js does not crash, but you should migrate those imports to bookingModel.js.
+ */
+console.warn('[DEPRECATED] requestModel.js is removed. Import bookingModel.js instead.');
+module.exports = require('../modules/booking/model');

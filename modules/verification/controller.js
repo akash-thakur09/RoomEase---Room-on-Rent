@@ -15,6 +15,10 @@ const uploadDocuments = async (req, res) => {
 // GET /api/verification/status/:userId
 const getStatus = async (req, res) => {
   try {
+    // Users can only check their own status; admins can check any
+    if (req.user.role !== 'admin' && req.user.id !== req.params.userId) {
+      return sendError(res, 'Forbidden: you can only check your own verification status', 403);
+    }
     const data = await service.getStatus(req.params.userId);
     return sendSuccess(res, 'Verification status fetched', data);
   } catch (err) {

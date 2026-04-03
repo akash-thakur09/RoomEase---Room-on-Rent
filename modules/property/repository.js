@@ -1,7 +1,8 @@
 const Room = require('./model');
 
 const create = (data) => Room.create(data);
-const findById = (id) => Room.findById(id);
+const findById = (id) =>
+  Room.findById(id).populate('landlord', 'name email contactNumber profilePhoto isVerified');
 const findByLandlord = (landlordId) => Room.find({ landlord: landlordId });
 const updateById = (id, data) => Room.findByIdAndUpdate(id, data, { new: true });
 const deleteById = (id) => Room.findByIdAndDelete(id);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Navbar from '../../shared/Navbar';
-import { CardSkeleton } from '../../shared/Skeleton';
+import Navbar from '../../shared/components/Navbar/Navbar';
+import { CardSkeleton } from '../../shared/components/Skeleton';
 import { getProperties } from '../../services/propertyService';
 import { createBooking } from '../../services/bookingService';
 import './property.css';

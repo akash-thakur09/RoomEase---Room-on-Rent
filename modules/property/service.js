@@ -21,10 +21,15 @@ const getRoomsByLandlord = async (landlordId) => {
   return repo.findByLandlord(landlordId);
 };
 
-const getAllRooms = async ({ city, type, page = 1, limit = 10 } = {}) => {
+const getAllRooms = async ({ city, type, minRent, maxRent, page = 1, limit = 12 } = {}) => {
   const query = {};
   if (city) query.city = city.toLowerCase();
   if (type) query.type = type;
+  if (minRent || maxRent) {
+    query.rent = {};
+    if (minRent) query.rent.$gte = parseInt(minRent);
+    if (maxRent) query.rent.$lte = parseInt(maxRent);
+  }
 
   const [rooms, total] = await repo.findAll(query, {
     page: parseInt(page),
@@ -53,9 +58,12 @@ const updateRoom = async (roomId, landlordId, data, files) => {
   return repo.updateById(roomId, updateData);
 };
 
-const deleteRoom = async (roomId) => {
+const deleteRoom = async (roomId, landlordId) => {
   const room = await repo.findById(roomId);
   if (!room) throw { status: 404, message: 'Room not found' };
+  if (landlordId && room.landlord.toString() !== landlordId.toString()) {
+    throw { status: 403, message: 'Not authorized to delete this room' };
+  }
   await repo.deleteById(roomId);
   await User.findByIdAndUpdate(room.landlord, { $pull: { rooms: room._id } });
 };

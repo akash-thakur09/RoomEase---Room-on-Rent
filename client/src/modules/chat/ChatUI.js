@@ -1,154 +1,201 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Navbar from '../../shared/Navbar';
-import { getConversations, getMessages, sendMessage } from '../../services/chatService';
-import { useAuth } from '../../shared/AuthContext';
-import './chat.css';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '../../shared/hooks/useAuth';
+import useSocket from '../../shared/hooks/useSocket';
+import { getConversations, getMessages, sendMessage as sendRest } from '../../services/chatService';
+import ChatSidebar from './components/ChatSidebar';
+import ChatWindow  from './components/ChatWindow';
+import styles from './chat.module.css';
 
 export default function ChatUI() {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState([]);
-  const [activeConv, setActiveConv] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState('');
-  const [loadingConvs, setLoadingConvs] = useState(true);
-  const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState('');
-  const bottomRef = useRef(null);
 
+  // ── Conversations ─────────────────────────────────────────────────────────
+  const [conversations,  setConversations]  = useState([]);
+  const [loadingConvs,   setLoadingConvs]   = useState(true);
+
+  // ── Active conversation + messages ────────────────────────────────────────
+  const [activeConv,     setActiveConv]     = useState(null);
+  const [messages,       setMessages]       = useState([]);
+  const [loadingMsgs,    setLoadingMsgs]    = useState(false);
+
+  // ── Online presence ───────────────────────────────────────────────────────
+  const [onlineUsers,    setOnlineUsers]    = useState(new Set());
+
+  // ── Typing indicator ──────────────────────────────────────────────────────
+  const [isTyping,       setIsTyping]       = useState(false);
+  const typingTimer                         = useRef(null); // eslint-disable-line no-unused-vars
+
+  // ── Sending ───────────────────────────────────────────────────────────────
+  const [sending,        setSending]        = useState(false);
+
+  // ── Mobile: show sidebar or window ───────────────────────────────────────
+  const [mobileView,     setMobileView]     = useState('sidebar'); // 'sidebar' | 'window'
+
+  // ── Socket ────────────────────────────────────────────────────────────────
+  const { status: socketStatus, joinConversation, sendMessage: socketSend, onMessage, onOnline, onOffline } = useSocket(user?.token ?? null);
+
+  // ── Load conversations on mount ───────────────────────────────────────────
   useEffect(() => {
     getConversations()
-      .then((res) => setConversations(res.data.data || []))
-      .catch(() => setError('Could not load conversations.'))
+      .then((res) => setConversations(res.data.data ?? []))
+      .catch(() => {})
       .finally(() => setLoadingConvs(false));
   }, []);
 
+  // ── Load messages when active conversation changes ────────────────────────
   useEffect(() => {
     if (!activeConv) return;
     setLoadingMsgs(true);
+    setMessages([]);
+
     getMessages(activeConv._id)
-      .then((res) => setMessages(res.data.data || []))
-      .catch(() => setError('Could not load messages.'))
+      .then((res) => setMessages(res.data.data ?? []))
+      .catch(() => {})
       .finally(() => setLoadingMsgs(false));
-  }, [activeConv]);
 
+    // Join socket room for this conversation
+    const other = activeConv.participants?.find(
+      (p) => (p._id ?? p) !== user?.userId
+    );
+    if (other) joinConversation(other._id ?? other);
+  }, [activeConv?._id]); // eslint-disable-line
+
+  // ── Socket: incoming messages ─────────────────────────────────────────────
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const unsub = onMessage((msg) => {
+      // Only append if it belongs to the active conversation
+      if (String(msg.conversationId) !== String(activeConv?._id)) return;
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!text.trim() || !activeConv) return;
+      setMessages((prev) => {
+        // Deduplicate by _id
+        if (prev.some((m) => m._id === msg._id)) return prev;
+        return [...prev, { ...msg, _isNew: true }];
+      });
+
+      // Update last message preview in sidebar
+      setConversations((prev) =>
+        prev.map((c) =>
+          String(c._id) === String(msg.conversationId)
+            ? { ...c, lastMessage: msg }
+            : c
+        )
+      );
+    });
+    return unsub;
+  }, [onMessage, activeConv?._id]);
+
+  // ── Socket: online/offline presence ──────────────────────────────────────
+  useEffect(() => {
+    const unsubOn  = onOnline(({ userId }) =>
+      setOnlineUsers((s) => new Set([...s, String(userId)]))
+    );
+    const unsubOff = onOffline(({ userId }) =>
+      setOnlineUsers((s) => { const n = new Set(s); n.delete(String(userId)); return n; })
+    );
+    return () => { unsubOn(); unsubOff(); };
+  }, [onOnline, onOffline]);
+
+  // ── Send message ──────────────────────────────────────────────────────────
+  const handleSend = useCallback(async (text) => {
+    if (!activeConv || !text.trim()) return;
+
+    // Optimistic message
+    const tempId  = `temp-${Date.now()}`;
+    const optimistic = {
+      _id: tempId,
+      _tempId: tempId,
+      _pending: true,
+      conversationId: activeConv._id,
+      senderId: user.userId,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, optimistic]);
     setSending(true);
+
     try {
-      const res = await sendMessage(activeConv._id, text.trim());
-      setMessages((prev) => [...prev, res.data.data]);
-      setText('');
+      if (socketStatus === 'connected') {
+        // Socket path — server will broadcast back via message:receive
+        socketSend(activeConv._id, text);
+        // Remove optimistic once real message arrives (dedup handles it)
+        setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+      } else {
+        // REST fallback
+        const res = await sendRest(activeConv._id, text);
+        const saved = res.data.data;
+        setMessages((prev) =>
+          prev.map((m) => m._tempId === tempId ? { ...saved, _isNew: true } : m)
+        );
+        setConversations((prev) =>
+          prev.map((c) =>
+            String(c._id) === String(activeConv._id)
+              ? { ...c, lastMessage: saved }
+              : c
+          )
+        );
+      }
     } catch {
-      setError('Failed to send message.');
+      setMessages((prev) =>
+        prev.map((m) => m._tempId === tempId ? { ...m, _pending: false, _failed: true } : m)
+      );
     } finally {
       setSending(false);
     }
+  }, [activeConv, user?.userId, socketStatus, socketSend]);
+
+  // ── Retry failed message ──────────────────────────────────────────────────
+  const handleRetry = useCallback((failedMsg) => {
+    setMessages((prev) => prev.filter((m) => m._tempId !== failedMsg._tempId));
+    handleSend(failedMsg.text);
+  }, [handleSend]);
+
+  // ── Select conversation ───────────────────────────────────────────────────
+  const handleSelect = (conv) => {
+    setActiveConv(conv);
+    setIsTyping(false);
+    setMobileView('window');
   };
 
-  const otherParticipant = (conv) =>
-    conv.participants?.find((p) => p._id !== user.userId) || {};
+  // ── Typing simulation (socket-ready placeholder) ──────────────────────────
+  // When socket emits 'typing:start' / 'typing:stop', update isTyping here.
+  // For now the state is wired and ready.
 
   return (
-    <div>
-      <Navbar />
-      <div className="chat-layout page-container">
+    <div className={styles.page}>
+      <div className={styles.layout}>
         {/* Sidebar */}
-        <aside className="chat-sidebar card">
-          <h2 className="chat-sidebar__title">Messages</h2>
-          {loadingConvs ? (
-            <div style={{ padding: 16 }}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="skeleton" style={{ height: 56, borderRadius: 8, marginBottom: 8 }} />
-              ))}
-            </div>
-          ) : conversations.length === 0 ? (
-            <div className="chat-empty">No conversations yet</div>
-          ) : (
-            <ul className="chat-conv-list">
-              {conversations.map((conv) => {
-                const other = otherParticipant(conv);
-                return (
-                  <li
-                    key={conv._id}
-                    className={`chat-conv-item${activeConv?._id === conv._id ? ' active' : ''}`}
-                    onClick={() => setActiveConv(conv)}
-                  >
-                    <div className="chat-conv-avatar">{other.name?.[0]?.toUpperCase() ?? '?'}</div>
-                    <div className="chat-conv-info">
-                      <p className="chat-conv-name">{other.name ?? 'Unknown'}</p>
-                      <p className="chat-conv-last">{conv.lastMessage?.content ?? 'No messages yet'}</p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </aside>
+        <div className={[
+          mobileView === 'window' ? styles.sidebarHidden : '',
+        ].join(' ')}>
+          <ChatSidebar
+            conversations={conversations}
+            activeConv={activeConv}
+            currentUserId={user?.userId}
+            onlineUsers={onlineUsers}
+            loading={loadingConvs}
+            onSelect={handleSelect}
+          />
+        </div>
 
-        {/* Main chat area */}
-        <main className="chat-main card">
-          {!activeConv ? (
-            <div className="chat-placeholder">
-              <p>Select a conversation to start chatting</p>
-            </div>
-          ) : (
-            <>
-              <div className="chat-header">
-                <div className="chat-conv-avatar">{otherParticipant(activeConv).name?.[0]?.toUpperCase() ?? '?'}</div>
-                <div>
-                  <p className="chat-header__name">{otherParticipant(activeConv).name ?? 'Unknown'}</p>
-                  <p className="chat-header__role">{otherParticipant(activeConv).role ?? ''}</p>
-                </div>
-              </div>
-
-              <div className="chat-messages">
-                {loadingMsgs ? (
-                  <div style={{ padding: 16 }}>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className={`skeleton chat-msg-skeleton${i % 2 === 0 ? '' : ' right'}`} />
-                    ))}
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="chat-empty">No messages yet. Say hello!</div>
-                ) : (
-                  messages.map((msg) => {
-                    const isMine = msg.senderId === user.userId || msg.senderId?._id === user.userId;
-                    return (
-                      <div key={msg._id} className={`chat-bubble${isMine ? ' mine' : ''}`}>
-                        <p>{msg.content}</p>
-                        <span className="chat-bubble__time">
-                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                        </span>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={bottomRef} />
-              </div>
-
-              <form className="chat-input-bar" onSubmit={handleSend}>
-                <input
-                  type="text"
-                  placeholder="Type a message…"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  disabled={sending}
-                />
-                <button type="submit" className="btn btn-primary" disabled={sending || !text.trim()}>
-                  {sending ? '…' : 'Send'}
-                </button>
-              </form>
-            </>
-          )}
-        </main>
+        {/* Window */}
+        <div className={[
+          mobileView === 'sidebar' ? styles.windowHidden : '',
+        ].join(' ')} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <ChatWindow
+            conversation={activeConv}
+            messages={messages}
+            loadingMsgs={loadingMsgs}
+            sending={sending}
+            isTyping={isTyping}
+            currentUserId={user?.userId}
+            socketStatus={socketStatus}
+            onSend={handleSend}
+            onRetry={handleRetry}
+            onBack={() => setMobileView('sidebar')}
+          />
+        </div>
       </div>
-      {error && <div className="error-state" style={{ position: 'fixed', bottom: 16, right: 16, padding: '12px 20px', background: '#fff5f5', borderRadius: 8, border: '1px solid #fed7d7', color: 'var(--danger)' }}>{error}</div>}
     </div>
   );
 }

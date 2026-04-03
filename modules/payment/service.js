@@ -8,17 +8,13 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-/**
- * Create a Razorpay order and persist a pending Payment record.
- */
 const createOrder = async ({ bookingId, amount, currency = 'INR' }) => {
   const booking = await bookingRepo.findById(bookingId);
   if (!booking) throw { status: 404, message: 'Booking not found' };
   if (booking.paymentStatus === 'paid') throw { status: 400, message: 'Booking already paid' };
 
-  // amount must be in paise (multiply rupees × 100)
   const rzpOrder = await razorpay.orders.create({
-    amount,          // caller passes paise directly
+    amount,
     currency,
     receipt: `booking_${bookingId}`,
     notes: { bookingId: bookingId.toString() },
@@ -33,13 +29,9 @@ const createOrder = async ({ bookingId, amount, currency = 'INR' }) => {
   return { order: rzpOrder, payment };
 };
 
-/**
- * Verify Razorpay webhook signature and update payment + booking status.
- */
 const handleWebhook = async (rawBody, signature) => {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-  // Validate HMAC-SHA256 signature
   const expectedSig = crypto
     .createHmac('sha256', secret)
     .update(rawBody)
@@ -73,4 +65,28 @@ const handleWebhook = async (rawBody, signature) => {
   return { received: true };
 };
 
-module.exports = { createOrder, handleWebhook };
+/**
+ * Get paginated payment history for a user (via their bookings).
+ */
+const getPaymentHistory = async ({ userId, page = 1, limit = 10 }) => {
+  // Fetch all booking IDs for this user
+  const [bookings] = await bookingRepo.findByUser({ tenantId: userId }, { page: 1, limit: 1000 });
+  const bookingIds = bookings.map((b) => b._id);
+
+  if (!bookingIds.length) return { payments: [], total: 0, page, limit };
+
+  const [payments, total] = await repo.findByBookingIds(bookingIds, {
+    page: parseInt(page),
+    limit: parseInt(limit),
+  });
+
+  return { payments, total, page: parseInt(page), limit: parseInt(limit) };
+};
+
+const getPaymentById = async (id) => {
+  const payment = await repo.findById(id);
+  if (!payment) throw { status: 404, message: 'Payment not found' };
+  return payment;
+};
+
+module.exports = { createOrder, handleWebhook, getPaymentHistory, getPaymentById };

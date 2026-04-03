@@ -11,13 +11,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Unified profile routes — works for both tenant and landlord
-router.get('/profile/:id', authMiddleware, controller.getProfile);
-router.put('/profile/:id', authMiddleware, controller.updateProfile);
+// ── Extended profile routes (must come before /:id to avoid conflicts) ────────
+router.get('/profile/room/:id', authMiddleware, controller.getTenantRoom);
+router.get('/profile/:id',    authMiddleware, controller.getProfile);
+router.put('/profile/:id',    authMiddleware, controller.updateProfile);
 router.delete('/profile/:email', authMiddleware, controller.deleteAccount);
 router.post('/profile/photo/:id', authMiddleware, upload.single('profilePhoto'), controller.uploadProfilePhoto);
 
-// Tenant-specific: get rented room
-router.get('/profile/room/:id', authMiddleware, controller.getTenantRoom);
+// ── Canonical RESTful user routes ─────────────────────────────────────────────
+// GET  /api/users/:id  — get user profile
+// PUT  /api/users/:id  — update user profile
+router.get('/:id',  authMiddleware, controller.getProfile);
+router.put('/:id',  authMiddleware, controller.updateProfile);
 
 module.exports = router;

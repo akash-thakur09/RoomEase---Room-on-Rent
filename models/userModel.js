@@ -1,24 +1,7 @@
-const mongoose = require("mongoose");
-
-const userSchema = new mongoose.Schema({
-  name: { 
-    type: String, 
-    required: true 
-  },
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true 
-  },
-  password: { 
-    type: String, 
-    required: true 
-  },
-  role: { 
-    type: String, 
-    enum: ['tenant', 'landlord'], 
-    required: true 
-  }, 
-});
-
-module.exports = mongoose.model("User", userSchema);
+/**
+ * userModel.js — UPDATED
+ * Unified user model replacing separate tenantModel + landlordModel.
+ * Role-specific fields are included conditionally via the role field.
+ * Legacy alias: re-exports from modules/user/model.js for backward compatibility.
+ */
+module.exports = require('../modules/user/model');

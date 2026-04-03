@@ -1,16 +1,6 @@
-const mongoose = require('mongoose');
-
-const roomSchema = new mongoose.Schema({
-  type: { type: String, required: true },
-  
-  email: { type: String, required: true},
-  
-  photos: [{ type: String }], 
-  address: { type: String, required: true },
-  city: { type: String, required: true },
-  landlord: { type: mongoose.Schema.Types.ObjectId, ref: 'Landlord', required: true },
-  status: { type: String, enum: ['available', 'occupied'], default: 'available' }
-  
-});
-
-module.exports = mongoose.model('Room', roomSchema);
+/**
+ * roomModel.js — DEPRECATED alias
+ * Use propertyModel.js or modules/property/model.js instead.
+ * Kept for backward compatibility with legacy routes that still import this file.
+ */
+module.exports = require('../modules/property/model');

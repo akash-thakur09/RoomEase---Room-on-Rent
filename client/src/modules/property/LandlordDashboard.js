@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../shared/Navbar';
-import { CardSkeleton } from '../../shared/Skeleton';
+import Navbar from '../../shared/components/Navbar/Navbar';
+import { CardSkeleton } from '../../shared/components/Skeleton';
 import { getUserRooms, addRoom, deleteRoom } from '../../services/propertyService';
-import { useAuth } from '../../shared/AuthContext';
+import { useAuth } from '../../shared/hooks/useAuth';
 import './property.css';
 import '../auth/auth.css';
 

@@ -1,16 +1,10 @@
-const mongoose = require('mongoose');
-
-const tenantSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  contactNumber: { type: String },
-  email: { type: String, required: true, unique: true },
-  profilePhoto: { type: String },
-  aadharNumber: { type: String },
-  aadharPhoto: { type: String }, 
-  passportPhoto: { type: String }, 
-  password: { type: String, required: true },
-  rentedRoom: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' } 
-  
-});
-
-module.exports = mongoose.model('Tenant', tenantSchema);
+/**
+ * tenantModel.js — REMOVED
+ * Tenants are now stored in the unified 'users' collection with role: 'tenant'.
+ * Tenant-specific fields (aadharNumber, rentedRoom, etc.) live on modules/user/model.js.
+ *
+ * This stub re-exports the User model so any legacy code that still imports
+ * tenantModel.js does not crash, but you should migrate those imports to userModel.js.
+ */
+console.warn('[DEPRECATED] tenantModel.js is removed. Import userModel.js instead.');
+module.exports = require('../modules/user/model');

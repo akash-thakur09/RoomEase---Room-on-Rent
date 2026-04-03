@@ -4,6 +4,9 @@ const create = (data) => Review.create(data);
 
 const findByBookingId = (bookingId) => Review.findOne({ bookingId });
 
+const findByBookingAndReviewer = (bookingId, reviewerId) =>
+  Review.findOne({ bookingId, reviewerId });
+
 /** Reviews for a property with avg rating via aggregation */
 const findByProperty = async (propertyId) => {
   const [meta] = await Review.aggregate([
@@ -53,4 +56,11 @@ const findByUser = async (targetUserId) => {
   };
 };
 
-module.exports = { create, findByBookingId, findByProperty, findByUser };
+/** Reviews written by a specific reviewer */
+const findByReviewer = (reviewerId) =>
+  Review.find({ reviewerId })
+    .populate('propertyId', 'type address city photos')
+    .populate('targetUserId', 'name')
+    .sort({ createdAt: -1 });
+
+module.exports = { create, findByBookingId, findByBookingAndReviewer, findByProperty, findByUser, findByReviewer };

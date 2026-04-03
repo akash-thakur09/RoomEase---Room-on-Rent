@@ -1,0 +1,57 @@
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Padding variants */
+.padNone { padding: 0; }
+.padSm   { padding: 16px; }
+.padMd   { padding: 24px; }
+.padLg   { padding: 32px; }
+
+/* Hover lift */
+.hoverable {
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.hoverable:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Border variant */
+.bordered {
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+/* Header / Body / Footer sub-sections */
+.header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.body {
+  padding: 24px;
+}
+
+.footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}

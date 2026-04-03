@@ -5,7 +5,7 @@ const bookingSchema = new mongoose.Schema(
     tenantId:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     landlordId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     propertyId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
-    status:        { type: String, enum: ['pending', 'approved', 'rejected', 'completed'], default: 'pending' },
+    status:        { type: String, enum: ['pending', 'approved', 'rejected', 'cancelled', 'completed'], default: 'pending' },
     paymentStatus: { type: String, enum: ['pending', 'paid'], default: 'pending' },
   },
   { timestamps: true }

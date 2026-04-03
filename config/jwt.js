@@ -3,7 +3,7 @@ const key = process.env.ACCESS_TOKEN_SECRET; // jwt secret key 123456789@akash
 
 // Generate JWT token
 const generateToken = (userId) => {
-  const token = jwt.sign({ userId }, key, { expiresIn: '7d' });
+  const token = jwt.sign({ id: userId }, key, { expiresIn: '7d' });
   return token;
 };
 

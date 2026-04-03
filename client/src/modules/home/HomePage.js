@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../../shared/Navbar';
 import './home.css';
 
 const ROOM_TYPES = [
@@ -12,8 +11,6 @@ const ROOM_TYPES = [
 export default function HomePage() {
   return (
     <div>
-      <Navbar />
-
       <section className="hero">
         <div className="hero__content">
           <h1 className="hero__title">Find Your Perfect Room</h1>
@@ -54,10 +51,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
-      <footer className="site-footer">
-        <p>© {new Date().getFullYear()} RoomEase. All rights reserved.</p>
-      </footer>
     </div>
   );
 }

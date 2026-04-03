@@ -23,9 +23,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth',         require('./modules/auth/routes'));
-app.use('/api/user',         require('./modules/user/routes'));
-app.use('/api/room',         require('./modules/property/routes'));
-app.use('/api/properties',   require('./modules/property/routes')); // canonical alias
+app.use('/api/users',        require('./modules/user/routes'));   // canonical
+app.use('/api/user',         require('./modules/user/routes'));   // legacy alias
+app.use('/api/landlord',     require('./modules/landlord/routes'));
+app.use('/api/properties',   require('./modules/property/routes')); // canonical
+app.use('/api/room',         require('./modules/property/routes')); // legacy alias
 app.use('/api/bookings',     require('./modules/booking/routes'));
 app.use('/api/request',      require('./modules/booking/routes')); // legacy alias
 app.use('/api/reviews',      require('./modules/review/routes'));
@@ -35,10 +37,10 @@ app.use('/api/payments',     require('./modules/payment/routes'));
 app.use('/api/payment',      require('./modules/payment/routes')); // legacy alias
 app.use('/api/verification', require('./modules/verification/routes'));
 
-// ── Legacy route aliases (backward-compat for frontend) ───────────────────────
-app.use('/api/tenant',   require('./modules/user/routes'));
-app.use('/api/landlord', require('./modules/user/routes'));
-app.use('/api/upload',   require('./modules/user/routes'));
+// ── API 404 handler (must be before React catch-all) ─────────────────────────
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: 'API route not found' });
+});
 
 // ── Serve React build ─────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '/client/build')));
@@ -46,8 +48,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '/client/build/index.html'));
 });
 
-// ── Error handlers ────────────────────────────────────────────────────────────
-app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
+// ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ success: false, message: 'Internal server error' });

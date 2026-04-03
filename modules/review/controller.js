@@ -22,6 +22,18 @@ const createReview = async (req, res) => {
   }
 };
 
+const getBookingReviewStatus = async (req, res) => {
+  try {
+    const data = await service.getBookingReviewStatus({
+      bookingId: req.params.bookingId,
+      userId: req.user.id,
+    });
+    return sendSuccess(res, 'Review status fetched', data);
+  } catch (err) {
+    return sendError(res, err.message, err.status || 500);
+  }
+};
+
 const getPropertyReviews = async (req, res) => {
   try {
     const data = await service.getPropertyReviews(req.params.id);
@@ -40,4 +52,13 @@ const getUserReviews = async (req, res) => {
   }
 };
 
-module.exports = { createReview, getPropertyReviews, getUserReviews };
+const getMyReviews = async (req, res) => {
+  try {
+    const data = await service.getMyReviews(req.user.id);
+    return sendSuccess(res, 'My reviews fetched', data);
+  } catch (err) {
+    return sendError(res, err.message, err.status || 500);
+  }
+};
+
+module.exports = { createReview, getBookingReviewStatus, getPropertyReviews, getUserReviews, getMyReviews };
