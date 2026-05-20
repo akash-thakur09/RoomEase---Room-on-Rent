@@ -29,6 +29,7 @@ export default function PropertyListing() {
       Object.keys(params).forEach((k) => !params[k] && delete params[k]);
       const res = await getProperties(params);
       const { rooms: data, total, page: p, limit } = res.data.data;
+      console.log('Fetch details:-  Fetched properties:', { data, total, page: p, limit });
       setRooms(data);
       setPagination({ total, page: p, limit });
     } catch (err) {

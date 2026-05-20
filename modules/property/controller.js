@@ -23,8 +23,8 @@ const getRoomsByLandlord = async (req, res) => {
 
 const getAllRooms = async (req, res) => {
   try {
-    const { city, type, minRent, maxRent, page, limit } = req.query;
-    const data = await service.getAllRooms({ city, type, minRent, maxRent, page, limit });
+    const { city, type, minRent, maxRent, status, search, page, limit } = req.query;
+    const data = await service.getAllRooms({ city, type, minRent, maxRent, status, search, page, limit });
     return sendSuccess(res, 'Rooms fetched', data);
   } catch (err) {
     return sendError(res, err.message, err.status || 500);
