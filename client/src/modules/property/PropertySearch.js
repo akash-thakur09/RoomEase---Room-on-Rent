@@ -94,8 +94,9 @@ export default function PropertySearch() {
         limit: LIMIT,
       };
 
-      // Map search string → city or address (backend supports city filter)
-      if (debouncedSearch) params.city = debouncedSearch;
+      console.log('Fetch details:-  params', params);
+
+      if (debouncedSearch) params.search = debouncedSearch;
 
       const res = await getProperties(params);
       let { rooms: data, total: t } = res.data.data;
@@ -103,7 +104,7 @@ export default function PropertySearch() {
       // Client-side sort (backend doesn't support sort param yet)
       if (sort === 'rent_asc')  data = [...data].sort((a, b) => (a.rent ?? Infinity) - (b.rent ?? Infinity));
       if (sort === 'rent_desc') data = [...data].sort((a, b) => (b.rent ?? -1) - (a.rent ?? -1));
-
+      console.log("Fetch details:-  data", data);
       setRooms(data);
       setTotal(t);
       setPage(targetPage);
@@ -121,6 +122,7 @@ export default function PropertySearch() {
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleFilterChange = (key, value) => {
+    console.log('Fetch details:- Handle Filter change:', { key, value });
     setFilters((f) => ({ ...f, [key]: value }));
   };
 

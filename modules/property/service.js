@@ -21,10 +21,20 @@ const getRoomsByLandlord = async (landlordId) => {
   return repo.findByLandlord(landlordId);
 };
 
-const getAllRooms = async ({ city, type, minRent, maxRent, page = 1, limit = 12 } = {}) => {
+const getAllRooms = async ({ city, type, minRent, maxRent, status, search, page = 1, limit = 12 } = {}) => {
   const query = {};
-  if (city) query.city = city.toLowerCase();
-  if (type) query.type = type;
+
+  // Exact city match (case-insensitive)
+  if (city)   query.city   = { $regex: new RegExp(`^${city}$`, 'i') };
+  if (type)   query.type   = type;
+  if (status) query.status = status;
+
+  // Free-text search across address, city, description
+  if (search) {
+    const re = new RegExp(search, 'i');
+    query.$or = [{ address: re }, { city: re }, { description: re }];
+  }
+
   if (minRent || maxRent) {
     query.rent = {};
     if (minRent) query.rent.$gte = parseInt(minRent);

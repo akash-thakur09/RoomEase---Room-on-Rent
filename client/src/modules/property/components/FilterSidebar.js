@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from '../search.module.css';
 
-const CITIES = ['indore', 'bhopal', 'mumbai', 'delhi', 'pune', 'bangalore', 'hyderabad'];
+const CITIES = ['Indore', 'Bhopal', 'Mumbai', 'Delhi', 'Pune', 'Bangalore', 'Hyderabad'];
 
 const TYPES = [
   { value: 'single',    label: 'Single Room',  icon: '🛏️' },
@@ -23,6 +23,7 @@ const STATUSES = [
  * @param {boolean}  isOpen    - mobile drawer open state
  */
 export default function FilterSidebar({ filters, onChange, onReset, isOpen }) {
+  console.log('Fetch details:-  FilterSidebar render with filters:', filters);
   const activeCount = [
     filters.city, filters.type, filters.minRent, filters.maxRent, filters.status,
   ].filter(Boolean).length;
